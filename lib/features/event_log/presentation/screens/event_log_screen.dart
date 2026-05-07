@@ -9,7 +9,9 @@ import 'package:mcp_visualizer/features/event_log/presentation/widgets/log_filte
 import 'package:mcp_visualizer/shared/widgets/empty_state.dart';
 
 class EventLogScreen extends ConsumerStatefulWidget {
-  const EventLogScreen({super.key});
+  const EventLogScreen({super.key, required this.serverId});
+
+  final String serverId;
 
   @override
   ConsumerState<EventLogScreen> createState() => _EventLogScreenState();
@@ -28,7 +30,7 @@ class _EventLogScreenState extends ConsumerState<EventLogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final allEntries = ref.watch(eventLogProvider);
+    final allEntries = ref.watch(eventLogProvider(widget.serverId));
     final filtered = allEntries
         .where(
           (e) => _levels.contains(e.level) && _categories.contains(e.category),
@@ -51,7 +53,9 @@ class _EventLogScreenState extends ConsumerState<EventLogScreen> {
             tooltip: 'Clear log',
             onPressed: allEntries.isEmpty
                 ? null
-                : () => ref.read(eventLogProvider.notifier).clear(),
+                : () => ref
+                      .read(eventLogProvider(widget.serverId).notifier)
+                      .clear(),
           ),
         ],
         bottom: PreferredSize(

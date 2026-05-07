@@ -6,11 +6,14 @@ import 'package:mcp_visualizer/features/connection/presentation/providers/mcp_cl
 import 'package:mcp_visualizer/features/prompts/domain/models/prompt_model.dart';
 
 // ---------------------------------------------------------------------------
-// Prompt list
+// Prompt list (family keyed by serverId)
 // ---------------------------------------------------------------------------
 
-final promptListProvider = FutureProvider<List<PromptModel>>((ref) async {
-  final client = ref.watch(mcpClientProvider);
+final promptListProvider = FutureProvider.family<List<PromptModel>, String>((
+  ref,
+  serverId,
+) async {
+  final client = ref.watch(mcpClientProvider(serverId));
   if (client == null) return [];
 
   final prompts = await client.listPrompts();
@@ -35,8 +38,10 @@ final promptListProvider = FutureProvider<List<PromptModel>>((ref) async {
 });
 
 // ---------------------------------------------------------------------------
-// Prompt execution state
+// Prompt execution state (family keyed by PromptKey = {serverId, promptName})
 // ---------------------------------------------------------------------------
+
+typedef PromptKey = ({String serverId, String promptName});
 
 class PromptExecutionState {
   const PromptExecutionState({
@@ -69,15 +74,15 @@ class PromptExecutionState {
 }
 
 class PromptGetNotifier extends Notifier<PromptExecutionState> {
-  PromptGetNotifier(this._promptName);
+  PromptGetNotifier(this.key);
 
-  final String _promptName;
+  final PromptKey key;
 
   @override
   PromptExecutionState build() => const PromptExecutionState();
 
   Future<void> get(Map<String, dynamic> args) async {
-    final client = ref.read(mcpClientProvider);
+    final client = ref.read(mcpClientProvider(key.serverId));
     if (client == null) {
       state = state.copyWith(
         isLoading: false,
@@ -94,7 +99,7 @@ class PromptGetNotifier extends Notifier<PromptExecutionState> {
     );
 
     try {
-      final result = await client.getPrompt(_promptName, args);
+      final result = await client.getPrompt(key.promptName, args);
       state = state.copyWith(
         isLoading: false,
         messages: result.messages,
@@ -120,6 +125,6 @@ class PromptGetNotifier extends Notifier<PromptExecutionState> {
 }
 
 final promptGetNotifierProvider =
-    NotifierProvider.family<PromptGetNotifier, PromptExecutionState, String>(
-      (promptName) => PromptGetNotifier(promptName),
+    NotifierProvider.family<PromptGetNotifier, PromptExecutionState, PromptKey>(
+      (k) => PromptGetNotifier(k),
     );

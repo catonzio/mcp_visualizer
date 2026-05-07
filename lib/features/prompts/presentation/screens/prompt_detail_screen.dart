@@ -7,8 +7,13 @@ import 'package:mcp_visualizer/features/prompts/presentation/widgets/prompt_mess
 import 'package:mcp_visualizer/shared/widgets/error_view.dart';
 
 class PromptDetailScreen extends ConsumerStatefulWidget {
-  const PromptDetailScreen({super.key, required this.promptName});
+  const PromptDetailScreen({
+    super.key,
+    required this.serverId,
+    required this.promptName,
+  });
 
+  final String serverId;
   final String promptName;
 
   @override
@@ -20,8 +25,13 @@ class _PromptDetailScreenState extends ConsumerState<PromptDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final promptsAsync = ref.watch(promptListProvider);
-    final execState = ref.watch(promptGetNotifierProvider(widget.promptName));
+    final promptsAsync = ref.watch(promptListProvider(widget.serverId));
+    final execState = ref.watch(
+      promptGetNotifierProvider((
+        serverId: widget.serverId,
+        promptName: widget.promptName,
+      )),
+    );
 
     return Scaffold(
       appBar: AppBar(title: Text(widget.promptName)),
@@ -29,7 +39,7 @@ class _PromptDetailScreenState extends ConsumerState<PromptDetailScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => ErrorView(
           message: err.toString(),
-          onRetry: () => ref.invalidate(promptListProvider),
+          onRetry: () => ref.invalidate(promptListProvider(widget.serverId)),
         ),
         data: (prompts) {
           final prompt = prompts
@@ -135,9 +145,10 @@ class _PromptDetailScreenState extends ConsumerState<PromptDetailScreen> {
                       TextButton(
                         onPressed: () => ref
                             .read(
-                              promptGetNotifierProvider(
-                                widget.promptName,
-                              ).notifier,
+                              promptGetNotifierProvider((
+                                serverId: widget.serverId,
+                                promptName: widget.promptName,
+                              )).notifier,
                             )
                             .reset(),
                         child: const Text('Clear'),
@@ -199,7 +210,12 @@ class _PromptDetailScreenState extends ConsumerState<PromptDetailScreen> {
 
   Future<void> _getPrompt() async {
     await ref
-        .read(promptGetNotifierProvider(widget.promptName).notifier)
+        .read(
+          promptGetNotifierProvider((
+            serverId: widget.serverId,
+            promptName: widget.promptName,
+          )).notifier,
+        )
         .get(_args ?? {});
   }
 }

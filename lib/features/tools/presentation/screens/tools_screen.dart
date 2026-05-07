@@ -8,7 +8,9 @@ import 'package:mcp_visualizer/shared/widgets/empty_state.dart';
 import 'package:mcp_visualizer/shared/widgets/error_view.dart';
 
 class ToolsScreen extends ConsumerStatefulWidget {
-  const ToolsScreen({super.key});
+  const ToolsScreen({super.key, required this.serverId});
+
+  final String serverId;
 
   @override
   ConsumerState<ToolsScreen> createState() => _ToolsScreenState();
@@ -26,7 +28,7 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final toolsAsync = ref.watch(toolListProvider);
+    final toolsAsync = ref.watch(toolListProvider(widget.serverId));
 
     return Scaffold(
       appBar: AppBar(
@@ -60,7 +62,7 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => ErrorView(
           message: err.toString(),
-          onRetry: () => ref.invalidate(toolListProvider),
+          onRetry: () => ref.invalidate(toolListProvider(widget.serverId)),
         ),
         data: (tools) {
           final filtered = _query.isEmpty
@@ -85,7 +87,8 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
           }
 
           return RefreshIndicator(
-            onRefresh: () async => ref.invalidate(toolListProvider),
+            onRefresh: () async =>
+                ref.invalidate(toolListProvider(widget.serverId)),
             child: ListView.separated(
               itemCount: filtered.length,
               separatorBuilder: (context, index) => const Divider(height: 1),
@@ -93,8 +96,9 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
                 final tool = filtered[i];
                 return ToolListTile(
                   tool: tool,
-                  onTap: () =>
-                      context.push('/tools/${Uri.encodeComponent(tool.name)}'),
+                  onTap: () => context.push(
+                    '/servers/${widget.serverId}/tools/${Uri.encodeComponent(tool.name)}',
+                  ),
                 );
               },
             ),

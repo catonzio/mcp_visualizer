@@ -7,7 +7,9 @@ import 'package:mcp_visualizer/shared/widgets/empty_state.dart';
 import 'package:mcp_visualizer/shared/widgets/error_view.dart';
 
 class ResourcesScreen extends ConsumerStatefulWidget {
-  const ResourcesScreen({super.key});
+  const ResourcesScreen({super.key, required this.serverId});
+
+  final String serverId;
 
   @override
   ConsumerState<ResourcesScreen> createState() => _ResourcesScreenState();
@@ -25,8 +27,8 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final resourcesAsync = ref.watch(resourceListProvider);
-    final updatedUris = ref.watch(resourceUpdateProvider);
+    final resourcesAsync = ref.watch(resourceListProvider(widget.serverId));
+    final updatedUris = ref.watch(resourceUpdateProvider(widget.serverId));
 
     return Scaffold(
       appBar: AppBar(
@@ -60,7 +62,7 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => ErrorView(
           message: err.toString(),
-          onRetry: () => ref.invalidate(resourceListProvider),
+          onRetry: () => ref.invalidate(resourceListProvider(widget.serverId)),
         ),
         data: (resources) {
           final filtered = _query.isEmpty
@@ -86,7 +88,8 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen> {
           }
 
           return RefreshIndicator(
-            onRefresh: () async => ref.invalidate(resourceListProvider),
+            onRefresh: () async =>
+                ref.invalidate(resourceListProvider(widget.serverId)),
             child: ListView.separated(
               itemCount: filtered.length,
               separatorBuilder: (context, index) => const Divider(height: 1),
@@ -146,10 +149,15 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen> {
                   onTap: () {
                     if (isUpdated) {
                       ref
-                          .read(resourceUpdateProvider.notifier)
+                          .read(
+                            resourceUpdateProvider(widget.serverId).notifier,
+                          )
                           .markSeen(resource.uri);
                     }
-                    context.push('/resources/detail', extra: resource.uri);
+                    context.push(
+                      '/servers/${widget.serverId}/resources/detail',
+                      extra: resource.uri,
+                    );
                   },
                 );
               },

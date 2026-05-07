@@ -32,15 +32,20 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
       (p) => p.id == widget.profileId,
       orElse: () => throw StateError('Profile not found'),
     );
-    await ref.read(mcpClientNotifierProvider.notifier).connect(profile);
+    await ref
+        .read(mcpClientNotifierProvider(widget.profileId).notifier)
+        .connect(profile);
   }
 
   @override
   Widget build(BuildContext context) {
-    final connectionState = ref.watch(connectionStateProvider);
+    final connectionState = ref.watch(
+      connectionStateProvider(widget.profileId),
+    );
     final profilesAsync = ref.watch(serverProfileNotifierProvider);
 
-    final profileName = profilesAsync.asData?.value
+    final profileName =
+        profilesAsync.asData?.value
             .where((p) => p.id == widget.profileId)
             .firstOrNull
             ?.name ??
@@ -49,10 +54,10 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(profileName),
-        actions: const [
+        actions: [
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: ConnectionStatusBadge(),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ConnectionStatusBadge(serverId: widget.profileId),
           ),
         ],
       ),
@@ -62,15 +67,18 @@ class _ConnectionScreenState extends ConsumerState<ConnectionScreen> {
           Disconnected() => _DisconnectedView(onConnect: _connect),
           Connecting() => const _ConnectingView(),
           Connected() => _ConnectedView(
-              onDisconnect: () async {
-                await ref.read(mcpClientNotifierProvider.notifier).disconnect();
-                if (context.mounted) context.pop();
-              },
-            ),
+            serverId: widget.profileId,
+            onDisconnect: () async {
+              await ref
+                  .read(mcpClientNotifierProvider(widget.profileId).notifier)
+                  .disconnect();
+              if (context.mounted) context.pop();
+            },
+          ),
           ConnectionError(:final failure) => _ErrorView(
-              message: failure.userMessage,
-              onRetry: _connect,
-            ),
+            message: failure.userMessage,
+            onRetry: _connect,
+          ),
         },
       ),
     );
@@ -126,8 +134,9 @@ class _ConnectingView extends StatelessWidget {
 }
 
 class _ConnectedView extends StatelessWidget {
-  const _ConnectedView({required this.onDisconnect});
+  const _ConnectedView({required this.serverId, required this.onDisconnect});
 
+  final String serverId;
   final VoidCallback onDisconnect;
 
   @override
@@ -135,7 +144,7 @@ class _ConnectedView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const ServerInfoCard(),
+        ServerInfoCard(serverId: serverId),
         const SizedBox(height: 16),
         const Text(
           'Use the Servers, Tools, Resources, and Prompts tabs to interact '
@@ -172,10 +181,7 @@ class _ErrorView extends StatelessWidget {
         children: [
           Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
           const SizedBox(height: 16),
-          Text(
-            'Connection failed',
-            style: theme.textTheme.titleMedium,
-          ),
+          Text('Connection failed', style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
           Text(
             message,

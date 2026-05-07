@@ -7,13 +7,16 @@ import 'package:mcp_visualizer/features/tools/domain/models/tool_model.dart';
 import 'package:mcp_visualizer/features/tools/domain/models/tool_result_model.dart';
 
 // ---------------------------------------------------------------------------
-// Tool list
+// Tool list (family keyed by serverId)
 // ---------------------------------------------------------------------------
 
 /// Fetches the list of tools from the connected MCP server.
 /// Returns an empty list when not connected.
-final toolListProvider = FutureProvider<List<ToolModel>>((ref) async {
-  final client = ref.watch(mcpClientProvider);
+final toolListProvider = FutureProvider.family<List<ToolModel>, String>((
+  ref,
+  serverId,
+) async {
+  final client = ref.watch(mcpClientProvider(serverId));
   if (client == null) return [];
 
   final tools = await client.listTools();
@@ -29,8 +32,10 @@ final toolListProvider = FutureProvider<List<ToolModel>>((ref) async {
 });
 
 // ---------------------------------------------------------------------------
-// Tool execution
+// Tool execution (family keyed by ToolKey = {serverId, toolName})
 // ---------------------------------------------------------------------------
+
+typedef ToolKey = ({String serverId, String toolName});
 
 /// State for a single tool execution.
 class ToolExecutionState {
@@ -65,15 +70,15 @@ class ToolExecutionState {
 }
 
 class ToolExecutionNotifier extends Notifier<ToolExecutionState> {
-  ToolExecutionNotifier(this._toolName);
+  ToolExecutionNotifier(this.key);
 
-  final String _toolName;
+  final ToolKey key;
 
   @override
   ToolExecutionState build() => const ToolExecutionState();
 
   Future<void> execute(Map<String, dynamic> args) async {
-    final client = ref.read(mcpClientProvider);
+    final client = ref.read(mcpClientProvider(key.serverId));
     if (client == null) {
       state = state.copyWith(
         isLoading: false,
@@ -91,7 +96,7 @@ class ToolExecutionNotifier extends Notifier<ToolExecutionState> {
     );
 
     try {
-      final tracking = await client.callToolWithTracking(_toolName, args);
+      final tracking = await client.callToolWithTracking(key.toolName, args);
       final operationId = tracking.operationId;
       final callResult = tracking.result;
 
@@ -123,7 +128,7 @@ class ToolExecutionNotifier extends Notifier<ToolExecutionState> {
   Future<void> cancel() async {
     final opId = state.operationId;
     if (opId == null) return;
-    final client = ref.read(mcpClientProvider);
+    final client = ref.read(mcpClientProvider(key.serverId));
     if (client == null) return;
     try {
       await client.cancelOperation(opId);
@@ -156,6 +161,6 @@ class ToolExecutionNotifier extends Notifier<ToolExecutionState> {
 }
 
 final toolExecutionNotifierProvider =
-    NotifierProvider.family<ToolExecutionNotifier, ToolExecutionState, String>(
-      (toolName) => ToolExecutionNotifier(toolName),
+    NotifierProvider.family<ToolExecutionNotifier, ToolExecutionState, ToolKey>(
+      (k) => ToolExecutionNotifier(k),
     );

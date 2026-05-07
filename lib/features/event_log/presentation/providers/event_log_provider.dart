@@ -12,10 +12,14 @@ const _uuid = Uuid();
 const int _maxEntries = 1000;
 
 class EventLogNotifier extends Notifier<List<LogEntry>> {
+  EventLogNotifier(this.serverId);
+
+  final String serverId;
+
   @override
   List<LogEntry> build() {
     // Subscribe to connection state changes
-    ref.listen(connectionStateProvider, (prev, next) {
+    ref.listen(connectionStateProvider(serverId), (prev, next) {
       final (msg, level) = switch (next) {
         Disconnected() => ('Disconnected from server', LogLevel.info),
         Connecting() => ('Connecting to server…', LogLevel.info),
@@ -32,7 +36,7 @@ class EventLogNotifier extends Notifier<List<LogEntry>> {
     });
 
     // Subscribe to raw MCP client logging events
-    ref.listen(mcpClientProvider, (prev, next) {
+    ref.listen(mcpClientProvider(serverId), (prev, next) {
       if (next == null || next == prev) return;
       next.onLogging((
         McpLogLevel level,
@@ -82,6 +86,7 @@ class EventLogNotifier extends Notifier<List<LogEntry>> {
   };
 }
 
-final eventLogProvider = NotifierProvider<EventLogNotifier, List<LogEntry>>(
-  EventLogNotifier.new,
-);
+final eventLogProvider =
+    NotifierProvider.family<EventLogNotifier, List<LogEntry>, String>(
+      (serverId) => EventLogNotifier(serverId),
+    );

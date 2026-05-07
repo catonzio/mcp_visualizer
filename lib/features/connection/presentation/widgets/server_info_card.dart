@@ -6,11 +6,13 @@ import 'package:mcp_visualizer/features/connection/domain/models/server_info.dar
 import 'package:mcp_visualizer/features/connection/presentation/providers/mcp_client_provider.dart';
 
 class ServerInfoCard extends ConsumerWidget {
-  const ServerInfoCard({super.key});
+  const ServerInfoCard({super.key, required this.serverId});
+
+  final String serverId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final connectionState = ref.watch(connectionStateProvider);
+    final connectionState = ref.watch(connectionStateProvider(serverId));
 
     if (connectionState is! Connected) return const SizedBox.shrink();
 

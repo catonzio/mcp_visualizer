@@ -6,13 +6,20 @@ import 'package:mcp_visualizer/features/resources/presentation/widgets/resource_
 import 'package:mcp_visualizer/shared/widgets/error_view.dart';
 
 class ResourceDetailScreen extends ConsumerWidget {
-  const ResourceDetailScreen({super.key, required this.uri});
+  const ResourceDetailScreen({
+    super.key,
+    required this.serverId,
+    required this.uri,
+  });
 
+  final String serverId;
   final String uri;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final contentAsync = ref.watch(resourceContentProvider(uri));
+    final contentAsync = ref.watch(
+      resourceContentProvider((serverId: serverId, uri: uri)),
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -21,7 +28,9 @@ class ResourceDetailScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh',
-            onPressed: () => ref.invalidate(resourceContentProvider(uri)),
+            onPressed: () => ref.invalidate(
+              resourceContentProvider((serverId: serverId, uri: uri)),
+            ),
           ),
         ],
       ),
@@ -29,7 +38,9 @@ class ResourceDetailScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => ErrorView(
           message: err.toString(),
-          onRetry: () => ref.invalidate(resourceContentProvider(uri)),
+          onRetry: () => ref.invalidate(
+            resourceContentProvider((serverId: serverId, uri: uri)),
+          ),
         ),
         data: (content) {
           if (content == null) {

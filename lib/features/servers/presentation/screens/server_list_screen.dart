@@ -37,8 +37,6 @@ class ServerListScreen extends ConsumerWidget {
                   profile: profiles[i],
                   onEdit: () => context.push('/servers/${profiles[i].id}/edit'),
                   onDelete: () => _confirmDelete(context, ref, profiles[i]),
-                  onConnect: () =>
-                      context.push('/servers/${profiles[i].id}/connect'),
                 ),
               ),
       ),

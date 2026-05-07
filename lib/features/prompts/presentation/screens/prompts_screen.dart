@@ -7,7 +7,9 @@ import 'package:mcp_visualizer/shared/widgets/empty_state.dart';
 import 'package:mcp_visualizer/shared/widgets/error_view.dart';
 
 class PromptsScreen extends ConsumerStatefulWidget {
-  const PromptsScreen({super.key});
+  const PromptsScreen({super.key, required this.serverId});
+
+  final String serverId;
 
   @override
   ConsumerState<PromptsScreen> createState() => _PromptsScreenState();
@@ -25,7 +27,7 @@ class _PromptsScreenState extends ConsumerState<PromptsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final promptsAsync = ref.watch(promptListProvider);
+    final promptsAsync = ref.watch(promptListProvider(widget.serverId));
 
     return Scaffold(
       appBar: AppBar(
@@ -59,7 +61,7 @@ class _PromptsScreenState extends ConsumerState<PromptsScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => ErrorView(
           message: err.toString(),
-          onRetry: () => ref.invalidate(promptListProvider),
+          onRetry: () => ref.invalidate(promptListProvider(widget.serverId)),
         ),
         data: (prompts) {
           final filtered = _query.isEmpty
@@ -84,7 +86,8 @@ class _PromptsScreenState extends ConsumerState<PromptsScreen> {
           }
 
           return RefreshIndicator(
-            onRefresh: () async => ref.invalidate(promptListProvider),
+            onRefresh: () async =>
+                ref.invalidate(promptListProvider(widget.serverId)),
             child: ListView.separated(
               itemCount: filtered.length,
               separatorBuilder: (context, index) => const Divider(height: 1),
@@ -120,7 +123,7 @@ class _PromptsScreenState extends ConsumerState<PromptsScreen> {
                     ],
                   ),
                   onTap: () => context.push(
-                    '/prompts/${Uri.encodeComponent(prompt.name)}',
+                    '/servers/${widget.serverId}/prompts/${Uri.encodeComponent(prompt.name)}',
                   ),
                 );
               },

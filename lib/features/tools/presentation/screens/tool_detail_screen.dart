@@ -10,8 +10,13 @@ import 'package:mcp_visualizer/features/tools/presentation/widgets/tool_result_v
 import 'package:mcp_visualizer/shared/widgets/error_view.dart';
 
 class ToolDetailScreen extends ConsumerStatefulWidget {
-  const ToolDetailScreen({super.key, required this.toolName});
+  const ToolDetailScreen({
+    super.key,
+    required this.serverId,
+    required this.toolName,
+  });
 
+  final String serverId;
   final String toolName;
 
   @override
@@ -24,9 +29,12 @@ class _ToolDetailScreenState extends ConsumerState<ToolDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final toolsAsync = ref.watch(toolListProvider);
+    final toolsAsync = ref.watch(toolListProvider(widget.serverId));
     final executionState = ref.watch(
-      toolExecutionNotifierProvider(widget.toolName),
+      toolExecutionNotifierProvider((
+        serverId: widget.serverId,
+        toolName: widget.toolName,
+      )),
     );
 
     return Scaffold(
@@ -35,7 +43,7 @@ class _ToolDetailScreenState extends ConsumerState<ToolDetailScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => ErrorView(
           message: err.toString(),
-          onRetry: () => ref.invalidate(toolListProvider),
+          onRetry: () => ref.invalidate(toolListProvider(widget.serverId)),
         ),
         data: (tools) {
           final tool = tools
@@ -63,18 +71,35 @@ class _ToolDetailScreenState extends ConsumerState<ToolDetailScreen> {
 
   Future<void> _execute() async {
     await ref
-        .read(toolExecutionNotifierProvider(widget.toolName).notifier)
+        .read(
+          toolExecutionNotifierProvider((
+            serverId: widget.serverId,
+            toolName: widget.toolName,
+          )).notifier,
+        )
         .execute(_args ?? {});
   }
 
   Future<void> _cancel() async {
     await ref
-        .read(toolExecutionNotifierProvider(widget.toolName).notifier)
+        .read(
+          toolExecutionNotifierProvider((
+            serverId: widget.serverId,
+            toolName: widget.toolName,
+          )).notifier,
+        )
         .cancel();
   }
 
   void _reset() {
-    ref.read(toolExecutionNotifierProvider(widget.toolName).notifier).reset();
+    ref
+        .read(
+          toolExecutionNotifierProvider((
+            serverId: widget.serverId,
+            toolName: widget.toolName,
+          )).notifier,
+        )
+        .reset();
   }
 }
 

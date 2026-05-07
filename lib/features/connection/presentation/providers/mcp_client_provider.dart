@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mcp_client/mcp_client.dart'
     hide ServerInfo, Disconnected, Connecting, Connected, ConnectionError;
-import 'package:mcp_client/mcp_client.dart' as mcp show ServerInfo;
 
 import 'package:mcp_visualizer/core/errors/mcp_failure.dart';
 import 'package:mcp_visualizer/features/connection/data/repositories/mcp_connection_repository_impl.dart';
@@ -23,10 +22,13 @@ final mcpConnectionRepositoryProvider = Provider<McpConnectionRepository>((
 });
 
 // ---------------------------------------------------------------------------
-// Client notifier — holds the live Client instance and connection state
+// Client notifier — one instance per server profile id (family keyed by id)
 // ---------------------------------------------------------------------------
 
 class McpClientNotifier extends Notifier<McpConnectionState> {
+  McpClientNotifier(this.serverId);
+
+  final String serverId;
   Client? _client;
 
   Client? get client => _client;
@@ -58,22 +60,24 @@ class McpClientNotifier extends Notifier<McpConnectionState> {
       (client) async {
         _client = client;
 
-        // Listen for server identity on connect
-        client.onConnect.listen((mcp.ServerInfo mcpInfo) {
-          state = McpConnectionState.connected(
-            serverInfo: ServerInfo(
-              name: mcpInfo.name,
-              version: mcpInfo.version,
-              protocolVersion: mcpInfo.protocolVersion ?? 'unknown',
-            ),
-          );
-          // Stamp last-connected on the profile
-          final updatedProfile = profile.copyWith(
-            lastConnectedAt: DateTime.now(),
-          );
-          ref.read(serverProfileNotifierProvider.notifier).save(updatedProfile);
-        });
+        // By the time createAndConnect resolves, the connection is already
+        // established and onConnect has already fired. Read server info directly.
+        final rawInfo = client.serverInfo;
+        state = McpConnectionState.connected(
+          serverInfo: ServerInfo(
+            name: rawInfo?['name'] as String? ?? 'Unknown',
+            version: rawInfo?['version'] as String? ?? 'unknown',
+            protocolVersion: client.protocolVersion,
+          ),
+        );
 
+        // Stamp last-connected on the profile
+        final updatedProfile = profile.copyWith(
+          lastConnectedAt: DateTime.now(),
+        );
+        ref.read(serverProfileNotifierProvider.notifier).save(updatedProfile);
+
+        // Subscribe to lifecycle events
         client.onDisconnect.listen((_) {
           _client = null;
           state = const McpConnectionState.disconnected();
@@ -83,11 +87,6 @@ class McpClientNotifier extends Notifier<McpConnectionState> {
           state = McpConnectionState.error(
             failure: McpFailure.unknown(message: error.message),
           );
-        });
-
-        // Register logging callback
-        client.onLogging((level, data, logger, extra) {
-          // Logging is consumed by event_log_provider via mcpClientProvider
         });
       },
     );
@@ -104,21 +103,25 @@ class McpClientNotifier extends Notifier<McpConnectionState> {
 }
 
 final mcpClientNotifierProvider =
-    NotifierProvider<McpClientNotifier, McpConnectionState>(
-      McpClientNotifier.new,
+    NotifierProvider.family<McpClientNotifier, McpConnectionState, String>(
+      (serverId) => McpClientNotifier(serverId),
     );
 
 // ---------------------------------------------------------------------------
-// Convenience providers
+// Convenience providers (family keyed by server profile id)
 // ---------------------------------------------------------------------------
 
-/// The raw [Client] instance, or null if disconnected.
-final mcpClientProvider = Provider<Client?>((ref) {
-  final notifier = ref.watch(mcpClientNotifierProvider.notifier);
-  ref.watch(mcpClientNotifierProvider); // rebuild when state changes
-  return notifier.client;
+/// The current [McpConnectionState] for a given server profile id.
+final connectionStateProvider = Provider.family<McpConnectionState, String>((
+  ref,
+  serverId,
+) {
+  return ref.watch(mcpClientNotifierProvider(serverId));
 });
 
-final connectionStateProvider = Provider<McpConnectionState>((ref) {
-  return ref.watch(mcpClientNotifierProvider);
+/// The raw [Client] instance for a given server profile id, or null if disconnected.
+final mcpClientProvider = Provider.family<Client?, String>((ref, serverId) {
+  final notifier = ref.watch(mcpClientNotifierProvider(serverId).notifier);
+  ref.watch(mcpClientNotifierProvider(serverId)); // rebuild when state changes
+  return notifier.client;
 });

@@ -211,38 +211,77 @@
 
 ---
 
-## Phase 4 — Polish
+## Phase 4 — Navigation UX Refactor
 
-### 4.1 Theme Toggle
+> **Goal:** The home screen shows only saved server cards. Clicking "Connect" on a card triggers a connection flow with a loader; once connected, tapping the card navigates to a dedicated server workspace screen that hosts the left `NavigationRail` / `NavigationBar` with Tools, Resources, Prompts, and Event Log sections. The shared primitives navigation that currently lives at the app root is moved inside this per-server workspace.
+
+### 4.1 Server Workspace Route
+
+- [x] Add a new GoRouter route `/servers/:id` (the "server workspace") that wraps the `StatefulShellRoute.indexedStack` currently used for the primitive tabs (Tools, Resources, Prompts, Event Log)
+- [x] The workspace route requires an active connection for the given `id`; if no connection exists, redirect to `/` (server list)
+- [x] Remove the top-level `StatefulShellRoute` so the primitive tabs are no longer reachable from the app root
+
+### 4.2 Server Workspace Screen
+
+- [x] Create `lib/features/servers/presentation/screens/server_workspace_screen.dart`:
+  - Hosts the adaptive `NavigationRail` (desktop) / `NavigationBar` (mobile/web) with tabs: Tools, Resources, Prompts, Event Log
+  - App bar shows the server name, a `ConnectionStatusBadge`, and a "Disconnect" action that navigates back to `/`
+  - Renders the currently selected tab's content in the main area
+
+### 4.3 Connect Flow on Server List Screen
+
+- [x] Update `ServerProfileCard` "Connect" button behaviour:
+  - Tapping "Connect" calls `McpClientNotifier.connect(profile)` and shows an inline `CircularProgressIndicator` on the card (replacing the button) while `connectionState` is `connecting`
+  - On success (`connected`), navigate to `/servers/:id`
+  - On error, display an inline error chip/snackbar on the card and restore the "Connect" button
+- [x] Remove any previous "connect navigates to a loader page" routing logic
+
+### 4.4 Home Screen Cleanup
+
+- [x] `ServerListScreen` (the home `/` route) must no longer render the `NavigationRail`/`NavigationBar` or any primitive tab
+- [x] The home app bar should show only the app title and the FAB for adding a new server profile; remove any connection-state-dependent widgets from the home app bar
+
+### 4.5 Multi-Connection Management
+
+- [x] Replace the single `mcpClientProvider` with a map-based `mcpClientMapProvider` (family keyed by `ServerProfile.id`) so multiple servers can be connected simultaneously
+- [x] Each server's workspace route reads from `mcpClientMapProvider(id)`; primitive providers (`toolListProvider`, `resourceListProvider`, `promptListProvider`, `eventLogProvider`) become `.family` providers keyed by `id`
+- [x] On the `ServerListScreen`, connected servers show a "Open" button (navigates to workspace) instead of "Connect"; a separate "Disconnect" action is available per-card (e.g. long-press or context menu)
+- [x] Explicit disconnect (via the workspace app bar or card action) calls `disconnect()` on that specific client and removes it from the map
+
+---
+
+## Phase 5 — Polish
+
+### 5.1 Theme Toggle
 
 - [ ] Add a `themeModeProvider` (StateProvider) persisted via `shared_preferences`
 - [ ] Add toggle button in app bar or settings drawer
 
-### 4.2 Log Export
+### 5.2 Log Export
 
 - [ ] Implement "Export" action in Event Log screen: serialize all current `LogEntry` items to plain text and share via platform share sheet (`Share.share` or file save dialog on desktop)
 
-### 4.3 Search & Filter for Primitives
+### 5.3 Search & Filter for Primitives
 
 - [ ] Add a search `TextField` at the top of Tools, Resources, and Prompts list screens
 - [ ] Filter provider results client-side by name/description match
 
-### 4.4 Error Boundary Widgets
+### 5.4 Error Boundary Widgets
 
 - [ ] Wrap each screen's body in a top-level `ErrorView` fallback that catches `AsyncError` from providers and shows a retry button
 - [ ] Wire retry to re-fetch the relevant provider (using `ref.invalidate`)
 
-### 4.5 Automatic Reconnection
+### 5.5 Automatic Reconnection
 
 - [ ] Add reconnection logic to `McpClientNotifier`: on transport error, attempt reconnect with exponential backoff (max 3 retries, configurable)
 - [ ] Expose reconnect attempt count in `McpConnectionState.error` variant
 
-### 4.6 Onboarding / Quick-Start Presets
+### 5.6 Onboarding / Quick-Start Presets
 
 - [ ] Create an onboarding screen shown on first launch (detected via `shared_preferences` flag)
 - [ ] Offer quick-start preset server profiles (e.g. `@modelcontextprotocol/server-filesystem`, `@modelcontextprotocol/server-everything`) that pre-fill the form
 
-### 4.7 Accessibility & UX
+### 5.7 Accessibility & UX
 
 - [ ] Ensure all interactive widgets have semantic labels
 - [ ] Test keyboard navigation on desktop (Tab order, Enter to activate)
@@ -250,22 +289,22 @@
 
 ---
 
-## Phase 5 — Smart Forms
+## Phase 6 — Smart Forms
 
-### 5.1 JSON Schema Parser
+### 6.1 JSON Schema Parser
 
 - [ ] Create `lib/core/schema/json_schema_parser.dart` that parses a `Map<String, dynamic>` JSON Schema object into a typed tree of `SchemaNode` (Freezed sealed class: `string`, `number`, `boolean`, `enumeration`, `object`, `array`)
 
-### 5.2 Schema Form Builder
+### 6.2 Schema Form Builder
 
 - [ ] Create `lib/core/schema/schema_form_builder.dart`: a widget that takes a `SchemaNode` root and recursively renders typed `FormField` widgets (TextFormField for string/number, Switch for boolean, DropdownButtonFormField for enum, recursive group for object)
 - [ ] Wire validation rules from schema (`required`, `minLength`, `minimum`, `maximum`, `pattern`) into form field validators
 
-### 5.3 Inline Schema Viewer
+### 6.3 Inline Schema Viewer
 
 - [ ] Create `lib/core/schema/schema_viewer.dart`: collapsible tree widget that renders the raw JSON Schema with syntax highlighting alongside the smart form
 
-### 5.4 Integration with Tool & Prompt Detail Screens
+### 6.4 Integration with Tool & Prompt Detail Screens
 
 - [ ] Replace `JsonInputField` in `tool_detail_screen.dart` with `SchemaFormBuilder` when a valid `inputSchema` is available; fall back to `JsonInputField` for unsupported or missing schemas
 - [ ] Replace `JsonInputField` in `prompt_detail_screen.dart` similarly for prompt arguments

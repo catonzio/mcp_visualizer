@@ -6,53 +6,61 @@ import 'package:mcp_visualizer/features/connection/presentation/providers/mcp_cl
 import 'package:mcp_visualizer/features/resources/domain/models/resource_model.dart';
 
 // ---------------------------------------------------------------------------
-// Resource list
+// Resource list (family keyed by serverId)
 // ---------------------------------------------------------------------------
 
-final resourceListProvider = FutureProvider<List<ResourceModel>>((ref) async {
-  final client = ref.watch(mcpClientProvider);
-  if (client == null) return [];
+final resourceListProvider = FutureProvider.family<List<ResourceModel>, String>(
+  (ref, serverId) async {
+    final client = ref.watch(mcpClientProvider(serverId));
+    if (client == null) return [];
 
-  final resources = await client.listResources();
-  return resources
-      .map(
-        (r) => ResourceModel(
-          uri: r.uri,
-          name: r.name,
-          description: r.description,
-          mimeType: r.mimeType,
-        ),
-      )
-      .toList();
-});
+    final resources = await client.listResources();
+    return resources
+        .map(
+          (r) => ResourceModel(
+            uri: r.uri,
+            name: r.name,
+            description: r.description,
+            mimeType: r.mimeType,
+          ),
+        )
+        .toList();
+  },
+);
 
 // ---------------------------------------------------------------------------
-// Resource content (family by URI)
+// Resource content (family keyed by ResourceKey = {serverId, uri})
 // ---------------------------------------------------------------------------
+
+typedef ResourceKey = ({String serverId, String uri});
 
 final resourceContentProvider =
-    FutureProvider.family<ResourceContentInfo?, String>((ref, uri) async {
-      final client = ref.watch(mcpClientProvider);
+    FutureProvider.family<ResourceContentInfo?, ResourceKey>((ref, key) async {
+      final client = ref.watch(mcpClientProvider(key.serverId));
       if (client == null) return null;
 
-      final result = await client.readResource(uri);
+      final result = await client.readResource(key.uri);
       return result.contents.isNotEmpty ? result.contents.first : null;
     });
 
 // ---------------------------------------------------------------------------
-// Updated resource URIs — tracks which resources have received update notifications
+// Updated resource URIs (family keyed by serverId)
 // ---------------------------------------------------------------------------
 
 class ResourceUpdateNotifier extends Notifier<Set<String>> {
+  ResourceUpdateNotifier(this.serverId);
+
+  final String serverId;
+
   @override
   Set<String> build() {
     // Wire up the resource-updated callback whenever the client changes
-    ref.listen(mcpClientProvider, (prev, next) {
+    ref.listen(mcpClientProvider(serverId), (prev, next) {
       if (next == null || next == prev) return;
       next.onResourceUpdated((uri) {
         state = {...state, uri};
         // Invalidate the content cache so the detail screen refreshes
-        ref.invalidate(resourceContentProvider(uri));
+        ref.invalidate(resourceContentProvider((serverId: serverId, uri: uri)));
       });
     });
     return {};
@@ -66,6 +74,6 @@ class ResourceUpdateNotifier extends Notifier<Set<String>> {
 }
 
 final resourceUpdateProvider =
-    NotifierProvider<ResourceUpdateNotifier, Set<String>>(
-      ResourceUpdateNotifier.new,
+    NotifierProvider.family<ResourceUpdateNotifier, Set<String>, String>(
+      (serverId) => ResourceUpdateNotifier(serverId),
     );

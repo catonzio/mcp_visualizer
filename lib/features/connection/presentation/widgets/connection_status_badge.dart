@@ -5,11 +5,13 @@ import 'package:mcp_visualizer/features/connection/domain/models/connection_stat
 import 'package:mcp_visualizer/features/connection/presentation/providers/mcp_client_provider.dart';
 
 class ConnectionStatusBadge extends ConsumerWidget {
-  const ConnectionStatusBadge({super.key});
+  const ConnectionStatusBadge({super.key, required this.serverId});
+
+  final String serverId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final connectionState = ref.watch(connectionStateProvider);
+    final connectionState = ref.watch(connectionStateProvider(serverId));
 
     final (color, label, animate) = switch (connectionState) {
       Disconnected() => (Colors.grey, 'Disconnected', false),
