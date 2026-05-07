@@ -33,6 +33,7 @@ class _PromptsScreenState extends ConsumerState<PromptsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Prompts'),
+        automaticallyImplyLeading: false,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),
           child: Padding(

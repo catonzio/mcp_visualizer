@@ -34,6 +34,7 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Resources'),
+        automaticallyImplyLeading: false,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),
           child: Padding(

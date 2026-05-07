@@ -34,6 +34,7 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tools'),
+        automaticallyImplyLeading: false,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),
           child: Padding(

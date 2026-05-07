@@ -40,6 +40,7 @@ class _EventLogScreenState extends ConsumerState<EventLogScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Event Log'),
+        automaticallyImplyLeading: false,
         actions: [
           // Export action
           IconButton(
