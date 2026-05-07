@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -7,6 +5,7 @@ import 'package:mcp_visualizer/core/utils/json_input_field.dart';
 import 'package:mcp_visualizer/features/tools/domain/models/tool_model.dart';
 import 'package:mcp_visualizer/features/tools/presentation/providers/tools_providers.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mcp_visualizer/features/tools/presentation/widgets/input_schema_viewer.dart';
 
 import 'package:mcp_visualizer/features/tools/presentation/widgets/tool_result_view.dart';
 import 'package:mcp_visualizer/shared/widgets/error_view.dart';
@@ -158,14 +157,7 @@ class _Body extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  child: SelectableText(
-                    const JsonEncoder.withIndent(
-                      '  ',
-                    ).convert(tool.inputSchema),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontFamily: 'monospace',
-                    ),
-                  ),
+                  child: InputSchemaViewer(schema: tool.inputSchema),
                 ),
               ],
             ),

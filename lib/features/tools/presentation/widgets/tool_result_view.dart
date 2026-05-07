@@ -77,10 +77,9 @@ class _TextResult extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             SelectableText(
-              text,
+              const JsonEncoder.withIndent('  ').convert(jsonDecode(text)),
               style: theme.textTheme.bodySmall?.copyWith(
                 fontFamily: 'monospace',
-                color: theme.colorScheme.onSurface,
               ),
             ),
           ],

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -26,65 +28,95 @@ class ServerProfileCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final connectionState = ref.watch(connectionStateProvider(profile.id));
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        supportedDevices: {PointerDeviceKind.mouse, PointerDeviceKind.touch},
+        onTap: () {
+          if (connectionState is Connected) {
+            context.push(AppRoutes.serverWorkspace(profile.id));
+          } else {
+            // If not connected, trigger the connect action instead of navigating.
+            ref
+                .read(mcpClientNotifierProvider(profile.id).notifier)
+                .connect(profile)
+                .then((_) {
+                  final state = ref.read(connectionStateProvider(profile.id));
+                  if (state is Connected && context.mounted) {
+                    context.push(AppRoutes.serverWorkspace(profile.id));
+                  }
+                });
+          }
+        },
+        child: Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Text(
-                          profile.name,
-                          style: theme.textTheme.titleMedium,
+                      Row(
+                        spacing: 8,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              profile.name,
+                              style: theme.textTheme.titleMedium,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          _TransportBadge(transport: profile.transportType),
+                        ],
+                      ),
+                      if (profile.lastConnectedAt != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Last connected: ${_formatDate(profile.lastConnectedAt!)}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                      if (connectionState is ConnectionError) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          connectionState.failure.userMessage,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.error,
+                          ),
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      _TransportBadge(transport: profile.transportType),
+                      ],
                     ],
                   ),
-                  if (profile.lastConnectedAt != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      'Last connected: ${_formatDate(profile.lastConnectedAt!)}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                  if (connectionState is ConnectionError) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      connectionState.failure.userMessage,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.error,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ],
-              ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  tooltip: 'Edit',
+                  icon: const Icon(Icons.edit_outlined),
+                  onPressed: onEdit,
+                ),
+                IconButton(
+                  tooltip: 'Delete',
+                  icon: Icon(
+                    Icons.delete_outline,
+                    color: theme.colorScheme.error,
+                  ),
+                  onPressed: onDelete,
+                ),
+                const SizedBox(width: 4),
+                _ActionButton(
+                  profile: profile,
+                  connectionState: connectionState,
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            IconButton(
-              tooltip: 'Edit',
-              icon: const Icon(Icons.edit_outlined),
-              onPressed: onEdit,
-            ),
-            IconButton(
-              tooltip: 'Delete',
-              icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
-              onPressed: onDelete,
-            ),
-            const SizedBox(width: 4),
-            _ActionButton(profile: profile, connectionState: connectionState),
-          ],
+          ),
         ),
       ),
     );
