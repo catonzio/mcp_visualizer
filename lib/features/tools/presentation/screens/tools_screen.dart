@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:mcp_visualizer/core/router/app_routes.dart';
 import 'package:mcp_visualizer/features/tools/presentation/providers/tools_providers.dart';
 import 'package:mcp_visualizer/features/tools/presentation/widgets/tool_list_tile.dart';
 import 'package:mcp_visualizer/shared/widgets/empty_state.dart';
@@ -97,7 +98,7 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
                 return ToolListTile(
                   tool: tool,
                   onTap: () => context.push(
-                    '/servers/${widget.serverId}/tools/${Uri.encodeComponent(tool.name)}',
+                    AppRoutes.toolDetail(widget.serverId, tool.name),
                   ),
                 );
               },

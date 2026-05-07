@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:mcp_visualizer/core/router/app_routes.dart';
 import 'package:mcp_visualizer/features/servers/domain/models/server_profile.dart';
 import 'package:mcp_visualizer/features/servers/presentation/providers/server_profile_providers.dart';
 import 'package:mcp_visualizer/features/servers/presentation/widgets/server_profile_card.dart';
@@ -35,13 +36,16 @@ class ServerListScreen extends ConsumerWidget {
                 itemCount: profiles.length,
                 itemBuilder: (context, i) => ServerProfileCard(
                   profile: profiles[i],
-                  onEdit: () => context.push('/servers/${profiles[i].id}/edit'),
+                  onEdit: () => context.pushNamed(
+                    AppRoutes.serverEditName,
+                    pathParameters: {'id': profiles[i].id},
+                  ),
                   onDelete: () => _confirmDelete(context, ref, profiles[i]),
                 ),
               ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/servers/add'),
+        onPressed: () => context.pushNamed(AppRoutes.serverAddName),
         tooltip: 'Add server',
         child: const Icon(Icons.add),
       ),

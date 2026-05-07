@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:mcp_visualizer/core/router/app_routes.dart';
 import 'package:mcp_visualizer/features/resources/presentation/providers/resources_providers.dart';
 import 'package:mcp_visualizer/shared/widgets/empty_state.dart';
 import 'package:mcp_visualizer/shared/widgets/error_view.dart';
@@ -155,7 +156,7 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen> {
                           .markSeen(resource.uri);
                     }
                     context.push(
-                      '/servers/${widget.serverId}/resources/detail',
+                      AppRoutes.resourceDetail(widget.serverId),
                       extra: resource.uri,
                     );
                   },

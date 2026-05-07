@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:mcp_visualizer/core/router/app_routes.dart';
 import 'package:mcp_visualizer/core/utils/platform_utils.dart';
 import 'package:mcp_visualizer/features/connection/presentation/providers/mcp_client_provider.dart';
 import 'package:mcp_visualizer/features/connection/presentation/widgets/connection_status_badge.dart';
@@ -76,7 +77,7 @@ class _ServerWorkspaceScreenState extends ConsumerState<ServerWorkspaceScreen> {
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
         tooltip: 'Back to servers',
-        onPressed: () => context.go('/'),
+        onPressed: () => context.go(AppRoutes.serverListPath),
       ),
       actions: [
         Padding(
@@ -141,7 +142,7 @@ class _ServerWorkspaceScreenState extends ConsumerState<ServerWorkspaceScreen> {
     await ref
         .read(mcpClientNotifierProvider(widget.serverId).notifier)
         .disconnect();
-    if (mounted) context.go('/');
+    if (mounted) context.go(AppRoutes.serverListPath);
   }
 }
 

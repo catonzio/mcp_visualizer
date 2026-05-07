@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:mcp_visualizer/core/errors/mcp_failure.dart';
+import 'package:mcp_visualizer/core/router/app_routes.dart';
 import 'package:mcp_visualizer/core/utils/platform_utils.dart';
 import 'package:mcp_visualizer/features/connection/domain/models/connection_state.dart';
 import 'package:mcp_visualizer/features/connection/presentation/providers/mcp_client_provider.dart';
@@ -109,7 +110,7 @@ class _ActionButton extends ConsumerWidget {
         child: CircularProgressIndicator(strokeWidth: 2),
       ),
       Connected() => FilledButton(
-        onPressed: () => context.push('/servers/${profile.id}'),
+        onPressed: () => context.push(AppRoutes.serverWorkspace(profile.id)),
         child: const Text('Open'),
       ),
       Disconnected() || ConnectionError() => FilledButton.tonal(
@@ -125,7 +126,7 @@ class _ActionButton extends ConsumerWidget {
         .connect(profile);
     final state = ref.read(connectionStateProvider(profile.id));
     if (state is Connected && context.mounted) {
-      context.push('/servers/${profile.id}');
+      context.push(AppRoutes.serverWorkspace(profile.id));
     }
   }
 }
