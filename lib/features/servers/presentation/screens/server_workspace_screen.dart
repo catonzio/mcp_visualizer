@@ -6,71 +6,78 @@ import 'package:mcp_visualizer/core/router/app_routes.dart';
 import 'package:mcp_visualizer/core/utils/platform_utils.dart';
 import 'package:mcp_visualizer/features/connection/presentation/providers/mcp_client_provider.dart';
 import 'package:mcp_visualizer/features/connection/presentation/widgets/connection_status_badge.dart';
-import 'package:mcp_visualizer/features/event_log/presentation/screens/event_log_screen.dart';
-import 'package:mcp_visualizer/features/prompts/presentation/screens/prompts_screen.dart';
-import 'package:mcp_visualizer/features/resources/presentation/screens/resources_screen.dart';
 import 'package:mcp_visualizer/features/servers/presentation/providers/server_profile_providers.dart';
-import 'package:mcp_visualizer/features/tools/presentation/screens/tools_screen.dart';
 
 // ---------------------------------------------------------------------------
-// Workspace screen — per-server shell with NavigationRail / NavigationBar
+// Workspace shell — keeps AppBar + NavigationRail alive for all workspace
+// routes. The router swaps only [child] when navigating between tabs and
+// detail pages (using NoTransitionPage, so there is no slide animation).
 // ---------------------------------------------------------------------------
 
-class ServerWorkspaceScreen extends ConsumerStatefulWidget {
-  const ServerWorkspaceScreen({super.key, required this.serverId});
+class ServerWorkspaceShell extends ConsumerWidget {
+  const ServerWorkspaceShell({
+    super.key,
+    required this.serverId,
+    required this.location,
+    required this.child,
+  });
 
   final String serverId;
 
-  @override
-  ConsumerState<ServerWorkspaceScreen> createState() =>
-      _ServerWorkspaceScreenState();
-}
+  /// Current matched URI path — used to highlight the correct rail destination.
+  final String location;
 
-class _ServerWorkspaceScreenState extends ConsumerState<ServerWorkspaceScreen> {
-  int _selectedIndex = 0;
+  final Widget child;
 
   static const _tabs = [
     _TabDef(
+      segment: 'tools',
       label: 'Tools',
       icon: Icons.handyman_outlined,
       selectedIcon: Icons.handyman,
     ),
     _TabDef(
+      segment: 'resources',
       label: 'Resources',
       icon: Icons.folder_outlined,
       selectedIcon: Icons.folder,
     ),
     _TabDef(
+      segment: 'prompts',
       label: 'Prompts',
       icon: Icons.chat_bubble_outline,
       selectedIcon: Icons.chat_bubble,
     ),
     _TabDef(
+      segment: 'log',
       label: 'Log',
       icon: Icons.receipt_long_outlined,
       selectedIcon: Icons.receipt_long,
     ),
   ];
 
+  int get _selectedIndex {
+    if (location.contains('/resources')) return 1;
+    if (location.contains('/prompts')) return 2;
+    if (location.contains('/log')) return 3;
+    return 0; // tools (default)
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final profilesAsync = ref.watch(serverProfileNotifierProvider);
     final serverName =
         profilesAsync.asData?.value
-            .where((p) => p.id == widget.serverId)
+            .where((p) => p.id == serverId)
             .firstOrNull
             ?.name ??
         'Server';
 
-    final body = IndexedStack(
-      index: _selectedIndex,
-      children: [
-        ToolsScreen(serverId: widget.serverId),
-        ResourcesScreen(serverId: widget.serverId),
-        PromptsScreen(serverId: widget.serverId),
-        EventLogScreen(serverId: widget.serverId),
-      ],
-    );
+    final selectedIndex = _selectedIndex;
+
+    void onTabSelected(int i) {
+      context.go('/servers/$serverId/${_tabs[i].segment}');
+    }
 
     final appBar = AppBar(
       title: Text(serverName),
@@ -82,12 +89,17 @@ class _ServerWorkspaceScreenState extends ConsumerState<ServerWorkspaceScreen> {
       actions: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: ConnectionStatusBadge(serverId: widget.serverId),
+          child: ConnectionStatusBadge(serverId: serverId),
         ),
         IconButton(
           icon: const Icon(Icons.link_off),
           tooltip: 'Disconnect',
-          onPressed: _disconnect,
+          onPressed: () async {
+            await ref
+                .read(mcpClientNotifierProvider(serverId).notifier)
+                .disconnect();
+            if (context.mounted) context.go(AppRoutes.serverListPath);
+          },
         ),
         const SizedBox(width: 8),
       ],
@@ -99,8 +111,8 @@ class _ServerWorkspaceScreenState extends ConsumerState<ServerWorkspaceScreen> {
         body: Row(
           children: [
             NavigationRail(
-              selectedIndex: _selectedIndex,
-              onDestinationSelected: (i) => setState(() => _selectedIndex = i),
+              selectedIndex: selectedIndex,
+              onDestinationSelected: onTabSelected,
               labelType: NavigationRailLabelType.all,
               destinations: _tabs
                   .map(
@@ -113,7 +125,7 @@ class _ServerWorkspaceScreenState extends ConsumerState<ServerWorkspaceScreen> {
                   .toList(),
             ),
             const VerticalDivider(width: 1),
-            Expanded(child: body),
+            Expanded(child: child),
           ],
         ),
       );
@@ -121,10 +133,10 @@ class _ServerWorkspaceScreenState extends ConsumerState<ServerWorkspaceScreen> {
 
     return Scaffold(
       appBar: appBar,
-      body: body,
+      body: child,
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (i) => setState(() => _selectedIndex = i),
+        selectedIndex: selectedIndex,
+        onDestinationSelected: onTabSelected,
         destinations: _tabs
             .map(
               (t) => NavigationDestination(
@@ -137,23 +149,18 @@ class _ServerWorkspaceScreenState extends ConsumerState<ServerWorkspaceScreen> {
       ),
     );
   }
-
-  Future<void> _disconnect() async {
-    await ref
-        .read(mcpClientNotifierProvider(widget.serverId).notifier)
-        .disconnect();
-    if (mounted) context.go(AppRoutes.serverListPath);
-  }
 }
 
 @immutable
 class _TabDef {
   const _TabDef({
+    required this.segment,
     required this.label,
     required this.icon,
     required this.selectedIcon,
   });
 
+  final String segment;
   final String label;
   final IconData icon;
   final IconData selectedIcon;

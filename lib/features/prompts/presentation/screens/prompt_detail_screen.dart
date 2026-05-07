@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mcp_visualizer/core/utils/json_input_field.dart';
 import 'package:mcp_visualizer/features/prompts/presentation/providers/prompts_providers.dart';
 import 'package:mcp_visualizer/features/prompts/presentation/widgets/prompt_message_view.dart';
+import 'package:go_router/go_router.dart';
+
 import 'package:mcp_visualizer/shared/widgets/error_view.dart';
 
 class PromptDetailScreen extends ConsumerStatefulWidget {
@@ -34,7 +36,14 @@ class _PromptDetailScreenState extends ConsumerState<PromptDetailScreen> {
     );
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.promptName)),
+      appBar: AppBar(
+        title: Text(widget.promptName),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () =>
+              context.pop(),
+        ),
+      ),
       body: promptsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => ErrorView(

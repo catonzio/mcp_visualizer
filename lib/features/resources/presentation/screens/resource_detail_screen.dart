@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:mcp_visualizer/features/resources/presentation/providers/resources_providers.dart';
 import 'package:mcp_visualizer/features/resources/presentation/widgets/resource_content_viewer.dart';
+import 'package:go_router/go_router.dart';
+
 import 'package:mcp_visualizer/shared/widgets/error_view.dart';
 
 class ResourceDetailScreen extends ConsumerWidget {
@@ -24,6 +26,10 @@ class ResourceDetailScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(uri, overflow: TextOverflow.ellipsis),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.pop(),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
