@@ -137,77 +137,77 @@
 
 ### 3.1 Tools — Domain Models
 
-- [ ] Create `lib/features/tools/domain/models/tool_model.dart`: Freezed wrapper around `mcp_client`'s `Tool` (name, description, inputSchema)
-- [ ] Create `lib/features/tools/domain/models/tool_result_model.dart`: Freezed union — `text(String)` | `image(Uint8List, String mimeType)` | `error(String)`
+- [x] Create `lib/features/tools/domain/models/tool_model.dart`: Freezed wrapper around `mcp_client`'s `Tool` (name, description, inputSchema)
+- [x] Create `lib/features/tools/domain/models/tool_result_model.dart`: Freezed union — `text(String)` | `image(String? data, String? url, String mimeType)` | `error(String)`
 
 ### 3.2 Tools — Providers
 
-- [ ] Create `lib/features/tools/presentation/providers/tools_providers.dart`:
+- [x] Create `lib/features/tools/presentation/providers/tools_providers.dart`:
   - `toolListProvider`: `FutureProvider` that calls `client.listTools()` and maps to `List<ToolModel>`
-  - `toolExecutionNotifierProvider`: `AsyncNotifier` with `execute(String toolName, Map<String, dynamic> args)` action; exposes `AsyncValue<ToolResultModel>`
+  - `toolExecutionNotifierProvider`: family `Notifier` with `execute(Map<String, dynamic> args)` action and `cancel()` support; exposes `ToolExecutionState`
 
 ### 3.3 Tools — Screens & Widgets
 
-- [ ] Create `lib/features/tools/presentation/screens/tools_screen.dart`: searchable `ListView` of `ToolListTile`; empty/error states
-- [ ] Create `lib/features/tools/presentation/widgets/tool_list_tile.dart`: name, truncated description, chevron
-- [ ] Create `lib/features/tools/presentation/screens/tool_detail_screen.dart`:
+- [x] Create `lib/features/tools/presentation/screens/tools_screen.dart`: searchable `ListView` of `ToolListTile`; empty/error states
+- [x] Create `lib/features/tools/presentation/widgets/tool_list_tile.dart`: name, truncated description, chevron
+- [x] Create `lib/features/tools/presentation/screens/tool_detail_screen.dart`:
   - Tool name + description header
   - Collapsible raw schema viewer
   - `JsonInputField` for arguments
   - Execute button with `CircularProgressIndicator` while running; cancel support
   - `ToolResultView` below
-- [ ] Create `lib/features/tools/presentation/widgets/tool_result_view.dart`: renders text, image, or error result; `CopyButton` for text results
+- [x] Create `lib/features/tools/presentation/widgets/tool_result_view.dart`: renders text, image, or error result; `CopyButton` for text results
 
 ### 3.4 Resources — Domain Models
 
-- [ ] Create `lib/features/resources/domain/models/resource_model.dart`: Freezed model wrapping `mcp_client`'s `Resource` (uri, name, description, mimeType)
+- [x] Create `lib/features/resources/domain/models/resource_model.dart`: Freezed model wrapping `mcp_client`'s `Resource` (uri, name, description, mimeType)
 
 ### 3.5 Resources — Providers
 
-- [ ] Create `lib/features/resources/presentation/providers/resources_providers.dart`:
+- [x] Create `lib/features/resources/presentation/providers/resources_providers.dart`:
   - `resourceListProvider`: `FutureProvider` for `client.listResources()`
   - `resourceContentProvider(String uri)`: `FutureProvider.family` for `client.readResource(uri)`
-  - `resourceSubscriptionProvider`: stream provider for `client.onResourceUpdated`; emits updated URIs
+  - `resourceUpdateProvider`: `NotifierProvider` that accumulates updated URIs via `client.onResourceUpdated`; invalidates content cache on update
 
 ### 3.6 Resources — Screens & Widgets
 
-- [ ] Create `lib/features/resources/presentation/screens/resources_screen.dart`: list with real-time highlight on updated resources
-- [ ] Create `lib/features/resources/presentation/screens/resource_detail_screen.dart`: shows URI, mimeType, and content via `ResourceContentViewer`
-- [ ] Create `lib/features/resources/presentation/widgets/resource_content_viewer.dart`: renders text in a scrollable monospace view; for binary content shows mimeType + size metadata + download/copy button
+- [x] Create `lib/features/resources/presentation/screens/resources_screen.dart`: list with real-time highlight on updated resources
+- [x] Create `lib/features/resources/presentation/screens/resource_detail_screen.dart`: shows URI, mimeType, and content via `ResourceContentViewer`
+- [x] Create `lib/features/resources/presentation/widgets/resource_content_viewer.dart`: renders text in a scrollable monospace view; for binary content shows mimeType + size metadata + copy button
 
 ### 3.7 Prompts — Domain Models
 
-- [ ] Create `lib/features/prompts/domain/models/prompt_model.dart`: Freezed model wrapping `mcp_client`'s `Prompt` (name, description, arguments list with name/description/required)
+- [x] Create `lib/features/prompts/domain/models/prompt_model.dart`: Freezed models — `PromptModel` (name, description, arguments) and `PromptArgumentModel` (name, description, required, defaultValue)
 
 ### 3.8 Prompts — Providers
 
-- [ ] Create `lib/features/prompts/presentation/providers/prompts_providers.dart`:
+- [x] Create `lib/features/prompts/presentation/providers/prompts_providers.dart`:
   - `promptListProvider`: `FutureProvider` for `client.listPrompts()`
-  - `promptGetNotifierProvider`: `AsyncNotifier` with `get(String promptName, Map<String, dynamic> args)` action; exposes `AsyncValue<List<PromptMessage>>`
+  - `promptGetNotifierProvider`: family `Notifier` with `get(Map<String, dynamic> args)` action; exposes `PromptExecutionState` with messages list
 
 ### 3.9 Prompts — Screens & Widgets
 
-- [ ] Create `lib/features/prompts/presentation/screens/prompts_screen.dart`: searchable list
-- [ ] Create `lib/features/prompts/presentation/screens/prompt_detail_screen.dart`:
+- [x] Create `lib/features/prompts/presentation/screens/prompts_screen.dart`: searchable list
+- [x] Create `lib/features/prompts/presentation/screens/prompt_detail_screen.dart`:
   - Prompt name + description
   - Arguments list with required/optional indicators
   - `JsonInputField` for arguments
   - "Get Prompt" button with loading state
   - `PromptMessageView` rendered below
-- [ ] Create `lib/features/prompts/presentation/widgets/prompt_message_view.dart`: chat-bubble style renderer alternating `user` / `assistant` roles; supports text and image content types
+- [x] Create `lib/features/prompts/presentation/widgets/prompt_message_view.dart`: chat-bubble style renderer alternating `user` / `assistant` roles; supports text and image content types
 
 ### 3.10 Event Log — Screens & Widgets
 
-- [ ] Create `lib/features/event_log/presentation/screens/event_log_screen.dart`:
-  - Auto-scrolling `ListView` of `LogEntryTile`
-  - Toolbar with filter bar and "Clear" + "Export" actions
-- [ ] Create `lib/features/event_log/presentation/widgets/log_entry_tile.dart`: timestamp, level chip, category tag, message (expandable for long entries)
-- [ ] Create `lib/features/event_log/presentation/widgets/log_filter_bar.dart`: multi-select chips for level and category filters
+- [x] Create `lib/features/event_log/presentation/screens/event_log_screen.dart`:
+  - Auto-scrolling `ListView` of `LogEntryTile` (newest first)
+  - Toolbar with filter bar and "Clear" + "Export" (copy to clipboard) actions
+- [x] Create `lib/features/event_log/presentation/widgets/log_entry_tile.dart`: timestamp, level chip, category tag, message (expandable for long entries)
+- [x] Create `lib/features/event_log/presentation/widgets/log_filter_bar.dart`: multi-select chips for level and category filters
 
 ### 3.11 Navigation — Full Route Map
 
-- [ ] Add routes for all new screens in GoRouter: tools, tool detail, resources, resource detail, prompts, prompt detail, event log
-- [ ] Implement bottom navigation bar or rail (adaptive) linking the five main sections: Servers, Tools, Resources, Prompts, Event Log
+- [x] Add routes for all new screens in GoRouter using `StatefulShellRoute.indexedStack`: tools, tool detail, resources, resource detail, prompts, prompt detail, event log
+- [x] Implement adaptive navigation: `NavigationBar` on mobile/web, `NavigationRail` on desktop (macOS/Linux/Windows)
 
 ---
 
