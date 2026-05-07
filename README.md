@@ -1,17 +1,45 @@
-# mcp_visualizer
+# MCP Visualizer
 
-A new Flutter project.
+A cross-platform Flutter app for inspecting and debugging [Model Context Protocol (MCP)](https://modelcontextprotocol.io) servers in real time.
 
-## Getting Started
+## What it does
 
-This project is a starting point for a Flutter application.
+Connect to any MCP server and:
 
-A few resources to get you started if this is your first Flutter project:
+- **Browse** all exposed Tools, Resources, and Prompts in a structured UI
+- **Execute** tools and prompts with a live JSON input form and view the results
+- **Read** resources and subscribe to real-time updates
+- **Monitor** a live event log of all protocol messages, errors, and notifications — filterable by level and category
+- **Manage** saved server profiles (STDIO, SSE, StreamableHTTP) with one-tap connect/disconnect
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Supported transports
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+| Transport | macOS / Windows / Linux | iOS / Android | Web |
+| --- | --- | --- | --- |
+| STDIO | ✅ | ❌ | ❌ |
+| SSE | ✅ | ✅ | ✅ |
+| StreamableHTTP | ✅ | ✅ | ✅ |
+
+## Prerequisites
+
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) ≥ 3.11.5
+- Dart SDK ≥ 3.11.5 (bundled with Flutter)
+
+## Running the app
+
+```bash
+# Install dependencies
+flutter pub get
+
+# Run on your target platform (macOS desktop recommended for STDIO support)
+flutter run -d macos
+flutter run -d chrome
+flutter run -d ios
+flutter run -d android
+```
+
+## Running tests
+
+```bash
+flutter test
+```
