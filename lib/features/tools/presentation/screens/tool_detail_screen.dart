@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:mcp_visualizer/core/utils/json_input_field.dart';
+import 'package:mcp_visualizer/features/tools/domain/models/input_schema/parse_input_schema.dart';
 import 'package:mcp_visualizer/features/tools/domain/models/tool_model.dart';
 import 'package:mcp_visualizer/features/tools/presentation/providers/tools_providers.dart';
 import 'package:go_router/go_router.dart';
@@ -136,6 +139,13 @@ class _Body extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final toolArgs = parseInputSchema(tool.inputSchema);
+    final toolArgsMap = {
+      for (var arg in toolArgs) arg.name: valueForField(arg),
+    };
+    final encodedToolArgs = JsonEncoder.withIndent('  ').convert(toolArgsMap);
+    final inputJsonInitialValue = replaceQuotesAroundRequired(encodedToolArgs);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -165,7 +175,10 @@ class _Body extends StatelessWidget {
           const SizedBox(height: 16),
 
           // JSON arguments input
-          JsonInputField(onChanged: onArgsChanged),
+          JsonInputField(
+            initialValue: inputJsonInitialValue,
+            onChanged: onArgsChanged,
+          ),
           const SizedBox(height: 16),
 
           // Execute / Cancel button
