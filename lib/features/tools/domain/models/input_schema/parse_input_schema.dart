@@ -56,9 +56,7 @@ List<FieldModel> parseInputSchema(Map<String, dynamic> schema) {
 dynamic valueForField(FieldModel model) {
   if (model.defaultValue != null) {
     if (model.defaultValue is String) {
-      return (model.defaultValue as String).isEmpty
-          ? ''
-          : '"${model.defaultValue}"';
+      return model.defaultValue;
     }
     return model.defaultValue.toString();
   }
@@ -69,7 +67,7 @@ dynamic valueForField(FieldModel model) {
     return [];
   }
   if (model.type.contains('string')) {
-    return model.isRequired ? 'required' : '';
+    return '';
   }
   if (model.type.contains('number')) {
     return 0;
