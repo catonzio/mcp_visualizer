@@ -77,7 +77,7 @@ class _TextResult extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             SelectableText(
-              const JsonEncoder.withIndent('  ').convert(jsonDecode(text)),
+              _formatText(text),
               style: theme.textTheme.bodySmall?.copyWith(
                 fontFamily: 'monospace',
               ),
@@ -86,6 +86,14 @@ class _TextResult extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatText(String input) {
+    try {
+      return const JsonEncoder.withIndent('  ').convert(jsonDecode(input));
+    } catch (_) {
+      return input;
+    }
   }
 }
 
